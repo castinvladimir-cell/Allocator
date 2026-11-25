@@ -11,7 +11,6 @@
 
 // int узел 16 байт, 4 данные, 4 в паддинг и 8. последний узел хранит в next_ нулл птр, который тоже 8 занимает.
 
-
 template <class T, class Alloc = std::allocator<T>>
 class MyList{
 private:
@@ -25,7 +24,7 @@ private:
     Node* head_ = nullptr;
 
     using NodeAlloc = typename std::allocator_traits<Alloc>::template rebind_alloc<Node>; // аллокатор того же вида, но под Node
-    NodeAlloc alloc_;                                                                      // сам аллокатор узлов
+    NodeAlloc alloc_;                                                                    // сам аллокатор узлов
     void move_(MyList& other) {
         size_ = other.size_;
         head_ = other.head_; 
@@ -41,7 +40,7 @@ private:
                 if (i == 0) {                         // Первый узел
                     current_ = head_;                // указывает на первый узел, значит current_ получает адрес первого.
                     ptratnext_ = current_ -> next_; // next_ первого узла указывает на второй.
-                    head_ -> ~Node();                  // Удаляем первый узел 
+                    head_ -> ~Node();              // Удаляем первый узел 
                     alloc_.deallocate(head_, 1);
                     current_ = ptratnext_;
                 } else {                         // со второго узела нужно удалить все                      
@@ -126,6 +125,14 @@ public:
 
     const_iterator end() const {
         return const_iterator(nullptr); 
+    }
+
+    const_iterator cbegin() const { // всегда константный, даже у неконстантного списка
+        return const_iterator(head_);
+    }
+
+    const_iterator cend() const {
+        return const_iterator(nullptr);
     }
 
     T& operator[](size_t j) {
@@ -309,12 +316,12 @@ public:
             for (size_t i = 0; i < size_; i++) {
                 if (i == 0) { // Первый круг 
                     head_ = new (alloc_.allocate(1)) Node(value); // создали новый узел на который указывает head 
-                } else if (i == 1) {        // Второй круг
-                    previous_ = head_;     // Закинули в переменную адрес того, на что указывает хед
+                } else if (i == 1) {                             // Второй круг
+                    previous_ = head_;                          // Закинули в переменную адрес того, на что указывает хед
                     head_ -> next_ = new (alloc_.allocate(1)) Node(value); // новый узел теперь связан с еще одним новым узлом. 
                 } else { // Последующие круги
                     previous_ -> next_ -> next_ = new (alloc_.allocate(1)) Node(value); // новый узел теперь связан с еще одним новым узлом.
-                    previous_ = previous_ -> next_; // обновляю значение внутри previous 
+                    previous_ = previous_ -> next_;                                    // обновляю значение внутри previous 
                 }
             }
         } else {

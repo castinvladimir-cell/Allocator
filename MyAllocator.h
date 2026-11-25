@@ -13,7 +13,7 @@ struct mempool {
     };
     static constexpr size_t size = sizeof(T) > sizeof(Nodik) ? sizeof(T) : sizeof(Nodik);
     Nodik* blocks = nullptr; 
-    Nodik* returned = nullptr;                        // вернувшиеся после деаллокейт
+    Nodik* returned = nullptr;                                      // вернувшиеся после деаллокейт
     size_t allocated = 0, released = 0, givenA = 0, fromheap = 0;  // выделено, возвращено, отдано уже
 
     void printccounted() {
@@ -44,7 +44,7 @@ struct mempool {
     }
 }; 
 
-template <typename T, size_t N> // N - 
+template <typename T, size_t N> 
 class MyAllocator {
 private: 
     std::shared_ptr<mempool<T, N>> pool_; // Указатель на пул
@@ -60,22 +60,26 @@ public:
         using other = MyAllocator<U, N>;
     };
     //1
-    bool operator==(const MyAllocator<T, N>& other) const {  return other.pool_ == pool_; }
-    bool operator!=(const MyAllocator<T, N>& other) const {  return other.pool_ != pool_; }
+    bool operator==(const MyAllocator<T, N>& other) const { return other.pool_ == pool_; }
+    bool operator!=(const MyAllocator<T, N>& other) const { return other.pool_ != pool_; }
     //2
     template <typename U>
     bool operator==(const MyAllocator<U, N>&) const { return false; }
     template <typename U>
     bool operator!=(const MyAllocator<U, N>&) const { return true; }
 
-    MyAllocator() : pool_(std::make_shared<mempool<T, N>>()) { } // создаём новый пул
+    MyAllocator() : pool_(std::make_shared<mempool<T, N>>()) { }          // создаём новый пул
+    MyAllocator(const MyAllocator&) = default;                           // Копия делит тот же пул
+    MyAllocator& operator=(const MyAllocator&) = default;               // присваивание тоже делит пул
+    MyAllocator(MyAllocator&& other) noexcept : pool_(other.pool_) { } // Перемещение копирует указатель. у other пул остаётся
     template <typename U>
     MyAllocator(const MyAllocator<U, N>&) noexcept : pool_(std::make_shared<mempool<T, N>>()) {  } // из аллокатора другого типа. Аллокатор для узла
 
-    T* allocate(size_t amount) { // память под amount объектов, без создания объектов
-        pool_ -> allocated += amount * sizeof(T);
+    T* allocate(size_t amount) {                  // память под amount объектов, без создания объектов
+        const size_t bytes = amount * sizeof(T); // сколько байт просят
+        pool_ -> allocated += bytes;
         if (amount == 1) {
-            if (pool_ -> returned != nullptr) {    // вернувшиеся есть 
+            if (pool_ -> returned != nullptr) {// вернувшиеся есть 
                 auto curr = pool_ -> returned;
                 pool_ -> returned = pool_ -> returned -> next_; 
                 return reinterpret_cast<T*>(curr);
@@ -91,13 +95,14 @@ public:
             pool_ -> givenA++;
             return reinterpret_cast<T*>(res);
         } else {
-            pool_ -> fromheap += amount * sizeof(T);
-            return static_cast<T*>(::operator new(amount * sizeof(T)));
+            pool_ -> fromheap += bytes;
+            return static_cast<T*>(::operator new(bytes));
         }
     }
 
     void deallocate(T* ptrfromalloc, size_t amount) { // Возвращается в пул
-        pool_ -> released += amount * sizeof(T);
+        const size_t bytes = amount * sizeof(T);     // сколько байт возвращают
+        pool_ -> released += bytes;
         if (amount == 1) {
             auto curr = reinterpret_cast<Nodik*>(ptrfromalloc);
             curr -> next_ = pool_ -> returned;    
