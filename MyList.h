@@ -26,7 +26,6 @@ private:
 
     using NodeAlloc = typename std::allocator_traits<Alloc>::template rebind_alloc<Node>; // аллокатор того же вида, но под Node
     NodeAlloc alloc_;                                                                      // сам аллокатор узлов
-
     void move_(MyList& other) {
         size_ = other.size_;
         head_ = other.head_; 

@@ -28,7 +28,7 @@ struct mempool {
 
     mempool() = default; 
 
-    mempool(const mempool&) = delete; 
+    mempool(const mempool&) = delete;             // Запрет конст. копирования 
     mempool& operator=(const mempool&) = delete;
 
     ~mempool() {
@@ -51,7 +51,6 @@ private:
     using Nodik = typename mempool<T, N>::Nodik;
 
 public:
-    using propagate_on_container_copy_assignment = std::true_type;
     using propagate_on_container_move_assignment = std::true_type;
     using propagate_on_container_swap            = std::true_type;
     using value_type                             = T;
@@ -88,9 +87,9 @@ public:
                 pool_ -> givenA = 0;
             } 
             auto start = reinterpret_cast<std::byte*>(pool_ -> blocks); 
-            auto cou = start + (pool_ -> givenA + 1) * mempool<T, N>::size; // считаем адрес
+            auto res = start + (pool_ -> givenA + 1) * mempool<T, N>::size; // считаем адрес
             pool_ -> givenA++;
-            return reinterpret_cast<T*>(cou);
+            return reinterpret_cast<T*>(res);
         } else {
             pool_ -> fromheap += amount * sizeof(T);
             return static_cast<T*>(::operator new(amount * sizeof(T)));

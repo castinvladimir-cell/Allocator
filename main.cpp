@@ -42,5 +42,26 @@ int main() {
         std::cout << value << std::endl;
     }
 
+    decltype(m2) m3; // доп. проверка флагов: map с моим аллокатором и своим пулом
+    m3[100] = 1;
+    m3 = std::move(m2); // перемещение: m3 забирает узлы m2 вместе с его аллокатором
+
+    decltype(m2) m4; // ещё один map со своим пулом
+    for (int i = 0; i < 5; i++) {
+        m4[i] = i * i;
+    }
+    m3.swap(m4); // swap: узлы и аллокаторы меняются местами
+
+    std::cout << "----после перемещения и swap----" << std::endl;
+    std::cout << "m3:";
+    for (const auto& [key, value] : m3) {
+        std::cout << " " << key << "-" << value;
+    }
+    std::cout << std::endl << "m4:";
+    for (const auto& [key, value] : m4) {
+        std::cout << " " << key << "-" << value;
+    }
+    std::cout << std::endl;
+
     std::cout << "----статистика пулов при уничтожении----" << std::endl;
 }
